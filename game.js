@@ -428,6 +428,13 @@ function createMysteryBuilding(scene) {
     const group = new BABYLON.TransformNode('mysteryGroup', scene);
     group.position = new BABYLON.Vector3(-9, 0, -3);
 
+    // Hitbox (Invisible bounding box for solid mouse interaction)
+    const hitBox = BABYLON.MeshBuilder.CreateBox('mysteryHitbox', { width: 8, height: 8, depth: 8 }, scene);
+    hitBox.position.y = 4;
+    hitBox.parent = group;
+    hitBox.isVisible = false;
+    hitBox.metadata = { buildingName: '❓ Mystery', buildingAction: () => { alert("Coming eventually..."); } };
+
     // Base
     const base = BABYLON.MeshBuilder.CreateBox('mysteryBase', { width: 4, height: 4, depth: 4 }, scene);
     const mat = new BABYLON.StandardMaterial('mysteryMat', scene);
@@ -436,7 +443,6 @@ function createMysteryBuilding(scene) {
     base.material = mat;
     base.position.y = 2;
     base.parent = group;
-    base.metadata = { buildingName: '??? Unknown ???', buildingAction: () => { } };
 
     // Roof
     const roof = BABYLON.MeshBuilder.CreateCylinder('mysteryRoof', { height: 2.5, diameterTop: 0, diameterBottom: 6.5, tessellation: 4 }, scene);
@@ -447,7 +453,6 @@ function createMysteryBuilding(scene) {
     roof.position.y = 5.2;
     roof.rotation.y = Math.PI / 4;
     roof.parent = group;
-    roof.metadata = { buildingName: '??? Unknown ???', buildingAction: () => { } };
 
     // Question mark sign
     const sign = BABYLON.MeshBuilder.CreatePlane('mysterySign', { width: 1, height: 1.5 }, scene);
@@ -458,7 +463,6 @@ function createMysteryBuilding(scene) {
     sign.material = signMat;
     sign.position = new BABYLON.Vector3(0, 2.5, 2.05);
     sign.parent = group;
-    sign.metadata = { buildingName: '??? Unknown ???', buildingAction: () => { } };
 
     return group;
 }
@@ -468,6 +472,13 @@ function createArena(scene) {
     const group = new BABYLON.TransformNode('arenaGroup', scene);
     group.position = new BABYLON.Vector3(0, 0, -6);
 
+    // Hitbox
+    const hitBox = BABYLON.MeshBuilder.CreateBox('arenaHitbox', { width: 9, height: 5, depth: 9 }, scene);
+    hitBox.position.y = 2.5;
+    hitBox.parent = group;
+    hitBox.isVisible = false;
+    hitBox.metadata = { buildingName: '⚔️ Arena', buildingAction: openArena };
+
     // Round base platform
     const platform = BABYLON.MeshBuilder.CreateCylinder('arenaPlatform', { height: 0.5, diameter: 8, tessellation: 24 }, scene);
     const platMat = new BABYLON.StandardMaterial('arenaPlatMat', scene);
@@ -476,7 +487,6 @@ function createArena(scene) {
     platform.material = platMat;
     platform.position.y = 0.25;
     platform.parent = group;
-    platform.metadata = { buildingName: '⚔️ Arena', buildingAction: openArena };
 
     // Colosseum walls (ring of pillars)
     for (let i = 0; i < 10; i++) {
@@ -490,7 +500,6 @@ function createArena(scene) {
         pillar.position.z = Math.sin(angle) * 3.5;
         pillar.position.y = 2;
         pillar.parent = group;
-        pillar.metadata = { buildingName: '⚔️ Arena', buildingAction: openArena };
 
         // Pillar tops
         const top = BABYLON.MeshBuilder.CreateBox('ptop' + i, { size: 0.8, height: 0.3 }, scene);
@@ -498,7 +507,6 @@ function createArena(scene) {
         top.position = pillar.position.clone();
         top.position.y = 4.15;
         top.parent = group;
-        top.metadata = { buildingName: '⚔️ Arena', buildingAction: openArena };
     }
 
     // Arena glow
@@ -515,6 +523,13 @@ function createMarket(scene) {
     const group = new BABYLON.TransformNode('marketGroup', scene);
     group.position = new BABYLON.Vector3(9, 0, -3);
 
+    // Hitbox
+    const hitBox = BABYLON.MeshBuilder.CreateBox('marketHitbox', { width: 7, height: 6, depth: 6 }, scene);
+    hitBox.position.y = 3;
+    hitBox.parent = group;
+    hitBox.isVisible = false;
+    hitBox.metadata = { buildingName: '🏪 Market (Lootboxes)', buildingAction: openMarket };
+
     // Base stall
     const stall = BABYLON.MeshBuilder.CreateBox('marketStall', { width: 5, height: 3, depth: 3.5 }, scene);
     const stallMat = new BABYLON.StandardMaterial('marketStallMat', scene);
@@ -523,7 +538,6 @@ function createMarket(scene) {
     stall.material = stallMat;
     stall.position.y = 1.5;
     stall.parent = group;
-    stall.metadata = { buildingName: '🏪 Market', buildingAction: openMarket };
 
     // Roof (angled awning)
     const roof = BABYLON.MeshBuilder.CreateBox('marketRoof', { width: 6, height: 0.2, depth: 4.5 }, scene);
@@ -534,7 +548,6 @@ function createMarket(scene) {
     roof.position.y = 3.5;
     roof.rotation.x = 0.15;
     roof.parent = group;
-    roof.metadata = { buildingName: '🏪 Market', buildingAction: openMarket };
 
     // Front counter
     const counter = BABYLON.MeshBuilder.CreateBox('counter', { width: 4, height: 1, depth: 0.5 }, scene);
@@ -544,7 +557,6 @@ function createMarket(scene) {
     counter.material = counterMat;
     counter.position = new BABYLON.Vector3(0, 0.5, 1.8);
     counter.parent = group;
-    counter.metadata = { buildingName: '🏪 Market', buildingAction: openMarket };
 
     // Market lantern
     const lantern = new BABYLON.PointLight('marketLantern', new BABYLON.Vector3(9, 3, -1), scene);
@@ -588,6 +600,117 @@ function createStarfield(scene) {
     starMat.pointsCloud = true;
     starMat.pointSize = 3;
     starMesh.material = starMat;
+}
+
+// ==================== LOOTBOX LOGIC ====================
+
+let globalPool = [];
+let isSpinning = false;
+
+async function prepareLootbox() {
+    if (globalPool.length === 0) {
+        try {
+            const res = await fetch('/api/inventory');
+            if (res.ok) {
+                globalPool = await res.json();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+}
+
+async function startLootboxSpin() {
+    if (isSpinning) return;
+    if (globalPool.length === 0) {
+        await prepareLootbox();
+    }
+
+    if (globalPool.length === 0) {
+        alert("The market has no items to give yet! Someone needs to forge something first.");
+        return;
+    }
+
+    isSpinning = true;
+    const btn = document.getElementById('lootbox-btn');
+    btn.disabled = true;
+    btn.textContent = "SPINNING...";
+    document.getElementById('lootbox-winner').style.display = 'none';
+
+    // Weighted random selection based on pickRate
+    const getRandomWeightedItem = () => {
+        let rand = Math.random() * 100; // total pickRate is normalized to ~100
+        let cumulative = 0;
+        for (const item of globalPool) {
+            cumulative += parseFloat(item.pickRate || 1);
+            if (rand <= cumulative) return item;
+        }
+        return globalPool[globalPool.length - 1]; // fallback
+    };
+
+    // Generate ~50 items for the track
+    const spinItems = [];
+    const totalItems = 50;
+    for (let i = 0; i < totalItems; i++) {
+        spinItems.push(getRandomWeightedItem());
+    }
+
+    // The winning item (say at index 45)
+    const winningIndex = 45;
+    const winner = spinItems[winningIndex];
+
+    // Populate track UI
+    const track = document.getElementById('spinner-track');
+    track.innerHTML = '';
+    track.style.transition = 'none';
+    track.style.transform = 'translateX(0px)';
+
+    // We assume each item card is exactly 120px wide (100px width + 20px gap/margin).
+    const cardWidth = 116;
+
+    spinItems.forEach(item => {
+        const d = document.createElement('div');
+        d.className = `spinner-item ${item.rarityLabel ? item.rarityLabel.toLowerCase() : ''}`;
+        d.innerHTML = `
+            <img src="${item.imageUrl}" />
+            <div class="spi-name">${item.name}</div>
+        `;
+        track.appendChild(d);
+    });
+
+    // Force reflow
+    void track.offsetWidth;
+
+    // Calculate final position
+    // We want the winning item to land directly in the middle of our 350px window (175px).
+    // The winner center = winningIndex * cardWidth + (cardWidth / 2)
+    const targetOffset = -(winningIndex * cardWidth) + (350 / 2) - (cardWidth / 2);
+    // Add a randomized sub-card offset so it doesn't land perfectly dead center every time
+    const variance = (Math.random() - 0.5) * (cardWidth - 10);
+    const finalTransform = targetOffset + variance;
+
+    // Apply animation (CSS transition)
+    track.style.transition = 'transform 5s cubic-bezier(0.1, 0.9, 0.2, 1)';
+    track.style.transform = `translateX(${finalTransform}px)`;
+
+    // Wait for animation to end
+    setTimeout(() => {
+        isSpinning = false;
+        btn.textContent = "OPEN FREE LOOTBOX";
+        btn.disabled = false;
+
+        // Show winner presentation
+        const winEl = document.getElementById('lootbox-winner');
+        winEl.innerHTML = `
+            <h3>YOU WON:</h3>
+            <div class="winner-card ${winner.rarityLabel.toLowerCase()}">
+                <img src="${winner.imageUrl}" />
+                <h4>${winner.name}</h4>
+                <div class="${winner.rarityLabel.toLowerCase()}">${winner.rarityLabel}</div>
+            </div>
+        `;
+        winEl.style.display = 'block';
+    }, 5100);
 }
 
 // ==================== INIT ====================

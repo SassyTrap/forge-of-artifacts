@@ -159,7 +159,19 @@
                     <button class="close-btn" onclick="closeMarket()">✕</button>
                 </div>
                 <div class="panel-body">
-                    <p class="coming-soon">The market is not yet open for business.<br>Check back soon, adventurer!</p>
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <button id="lootbox-btn" class="retro-btn" onclick="startLootboxSpin()">OPEN FREE
+                            LOOTBOX</button>
+                    </div>
+
+                    <div class="spinner-window">
+                        <div class="spinner-cursor"></div>
+                        <div class="spinner-track" id="spinner-track">
+                            <!-- Items populated by JS -->
+                        </div>
+                    </div>
+
+                    <div id="lootbox-winner" class="lootbox-winner" style="display: none;"></div>
                 </div>
             </div>
         </div>
