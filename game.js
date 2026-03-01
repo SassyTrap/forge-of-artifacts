@@ -80,13 +80,16 @@ async function forgeItem() {
         const data = await response.json();
 
         currentForgedItem = {
-            imageUrl: data.imageUrl,
-            name: data.metadata.name,
-            stars: data.metadata.stars,
-            category: data.metadata.category,
-            type: selectedType,
-            description: data.metadata.ability,
-            userDescription: description
+            imageUrl: data.image_url, // Adjusted to match DB output
+            name: data.name,
+            stars: data.stars,
+            category: data.category,
+            type: data.item_type,
+            description: data.ability,
+            userDescription: data.description,
+            // These will be calculated when fetching inventory, but we can set them as newest here
+            rarityLabel: 'Checking...',
+            pickRate: '...'
         };
 
         displayResult(currentForgedItem);
@@ -113,6 +116,15 @@ function displayResult(item) {
 
     // Category
     document.getElementById('result-category').textContent = item.category;
+
+    // Rarity
+    const rarityEl = document.getElementById('result-rarity');
+    if (item.rarityLabel) {
+        rarityEl.textContent = item.rarityLabel;
+        rarityEl.className = 'item-rarity ' + item.rarityLabel.toLowerCase();
+    } else {
+        rarityEl.textContent = '';
+    }
 
     // Type badge
     const badgeEl = document.getElementById('result-type-badge');
@@ -146,8 +158,20 @@ function goBackToForge() {
 }
 
 function openInventory() {
-    renderInventoryGrid();
+    fetchInventoryAndRender();
     document.getElementById('inventory-overlay').classList.add('active');
+}
+
+async function fetchInventoryAndRender() {
+    try {
+        const res = await fetch('/api/inventory');
+        if (res.ok) {
+            inventory = await res.json();
+        }
+    } catch (e) {
+        console.error("Failed to fetch inventory", e);
+    }
+    renderInventoryGrid();
 }
 
 function closeInventory() {
@@ -193,8 +217,10 @@ function renderInventoryGrid() {
             <div class="inv-item-img"><img src="${item.imageUrl}" alt="${item.name}" /></div>
             <div class="inv-item-name">${item.name}</div>
             <div class="inv-item-stars" style="color: var(--star-gold);">${'★'.repeat(item.stars)}${'☆'.repeat(5 - item.stars)}</div>
+            <div class="inv-item-rarity ${item.rarityLabel ? item.rarityLabel.toLowerCase() : ''}">${item.rarityLabel || ''}</div>
+            <div class="inv-item-pickrate">${item.pickRate ? item.pickRate + '%' : ''}</div>
         `;
-        card.title = `${item.name}\n${item.category} (${item.type})\n${item.description}`;
+        card.title = `${item.name}\n${item.category} (${item.itemType || item.type})\n${item.description}`;
         grid.appendChild(card);
     });
 }
@@ -566,3 +592,20 @@ function createStarfield(scene) {
 
 // ==================== INIT ====================
 // Scene is initialized via UI interactions.
+
+async function checkSessionStatus() {
+    try {
+        const res = await fetch('/api/me');
+        if (res.ok) {
+            const data = await res.json();
+            if (data.hasForged) {
+                // Pre-populate so they can't forge again locally either
+                inventory = [{ dummy: true }];
+                updateHud();
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+checkSessionStatus();

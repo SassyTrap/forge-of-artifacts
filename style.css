@@ -16,11 +16,17 @@
     --text-light: #e0dcc8;
     --text-dim: #8a8672;
     --text-gold: #e8c864;
-    --text-white: #ffffff;
     --star-gold: #ffd700;
     --offense-color: #ff4444;
     --support-color: #44aaff;
     --summoning-color: #cc66ff;
+
+    /* Rarity Colors */
+    --rarity-common: #8a8672;
+    --rarity-uncommon: #33aa55;
+    --rarity-rare: #3366cc;
+    --rarity-epic: #9944cc;
+    --rarity-legendary: #ffaa00;
 }
 
 * {
@@ -376,7 +382,7 @@ body {
     border: 3px solid var(--border-gold);
     border-radius: 6px;
     overflow: hidden;
-    background: #fff;
+    background: radial-gradient(circle at center, #2a2a3e 0%, #1a1a2e 100%);
     box-shadow: 0 0 20px rgba(201, 160, 78, 0.3);
     position: relative;
 }
@@ -422,6 +428,60 @@ body {
     margin-bottom: 0.25rem;
     text-transform: uppercase;
     letter-spacing: 1px;
+}
+
+.item-rarity {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.65rem;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.item-pickrate {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.45rem;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
+}
+
+/* Rarity Modifier Classes */
+.common {
+    color: var(--rarity-common);
+}
+
+.uncommon {
+    color: var(--rarity-uncommon);
+    text-shadow: 0 0 8px rgba(51, 170, 85, 0.4);
+}
+
+.rare {
+    color: var(--rarity-rare);
+    text-shadow: 0 0 8px rgba(51, 102, 204, 0.5);
+}
+
+.epic {
+    color: var(--rarity-epic);
+    text-shadow: 0 0 8px rgba(153, 68, 204, 0.6);
+}
+
+.legendary {
+    color: var(--rarity-legendary);
+    text-shadow: 0 0 10px rgba(255, 170, 0, 0.8);
+    animation: pulseLegendary 2s infinite alternate;
+}
+
+@keyframes pulseLegendary {
+    0% {
+        transform: scale(1);
+        text-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+    }
+
+    100% {
+        transform: scale(1.05);
+        text-shadow: 0 0 20px rgba(255, 170, 0, 1);
+    }
 }
 
 .item-type-badge {
@@ -630,7 +690,7 @@ body {
     height: 80px;
     border: 2px solid var(--border-gold-dim);
     border-radius: 3px;
-    background: #fff;
+    background: radial-gradient(circle at center, #2a2a3e 0%, #1a1a2e 100%);
     overflow: hidden;
 }
 
@@ -654,6 +714,19 @@ body {
 .inv-item-stars {
     font-size: 0.65rem;
     letter-spacing: 1px;
+}
+
+.inv-item-rarity {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.5rem;
+    text-transform: uppercase;
+    margin-top: -0.15rem;
+}
+
+.inv-item-pickrate {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.6rem;
+    color: var(--text-dim);
 }
 
 .close-btn {
