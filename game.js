@@ -725,6 +725,12 @@ async function checkSessionStatus() {
                 // Pre-populate so they can't forge again locally either
                 inventory = [{ dummy: true }];
                 updateHud();
+
+                // Skip directly to the 3D hub screen
+                showScreen('hub-screen');
+                if (!scene) {
+                    initBabylonScene();
+                }
             }
         }
     } catch (e) {
